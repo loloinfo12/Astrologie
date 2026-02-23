@@ -1,5 +1,12 @@
 import streamlit as st
 from PIL import Image
+import json
+import os
+
+# ==============================
+# Fichier de sauvegarde des joueurs
+# ==============================
+FICHIER_JOUEURS = "joueurs.json"
 
 # ==============================
 # Heures astrales Rêve de Dragon
@@ -51,19 +58,25 @@ def texte_astral(bonus, nom_heure):
         return f"💀 Très défavorable ({nom_heure}) : les astres sont contre vous !"
 
 # ==============================
-# Stockage des joueurs et de leur HN
+# Gestion des joueurs persistante
 # ==============================
-if "joueurs" not in st.session_state:
-    st.session_state.joueurs = {}  # clé = nom du joueur, valeur = HN (1-12)
+if os.path.exists(FICHIER_JOUEURS):
+    with open(FICHIER_JOUEURS, "r") as f:
+        st.session_state.joueurs = json.load(f)
+else:
+    st.session_state.joueurs = {}
 
+def sauvegarder_joueurs():
+    with open(FICHIER_JOUEURS, "w") as f:
+        json.dump(st.session_state.joueurs, f)
+
+# ==============================
+# Interface Streamlit
+# ==============================
 st.title("🔮 Rêve de Dragon - Calcul Astral")
 
-# ==============================
-# Gestion des joueurs
-# ==============================
-st.subheader("🧙‍♂️ Gestion des joueurs")
-
 # Ajouter un joueur
+st.subheader("🧙‍♂️ Ajouter un joueur")
 nom_joueur = st.text_input("Nom du joueur à enregistrer")
 hn_selection = st.selectbox("Heure de naissance du joueur", [f"{num} - {nom}" for num, nom in heures_ast.items()])
 heure_naissance = int(hn_selection.split(" - ")[0])
@@ -71,6 +84,7 @@ heure_naissance = int(hn_selection.split(" - ")[0])
 if st.button("Enregistrer le joueur"):
     if nom_joueur:
         st.session_state.joueurs[nom_joueur] = heure_naissance
+        sauvegarder_joueurs()
         st.success(f"Joueur {nom_joueur} enregistré avec HN = {heure_naissance} ({heures_ast[heure_naissance]})")
     else:
         st.warning("Veuillez entrer un nom de joueur valide.")
@@ -81,6 +95,7 @@ if st.session_state.joueurs:
     joueur_suppr = st.selectbox("Sélectionnez le joueur à supprimer", list(st.session_state.joueurs.keys()), key="suppr")
     if st.button("Supprimer ce joueur"):
         del st.session_state.joueurs[joueur_suppr]
+        sauvegarder_joueurs()
         st.success(f"Joueur {joueur_suppr} supprimé.")
 
 # ==============================
