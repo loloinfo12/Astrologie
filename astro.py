@@ -120,7 +120,11 @@ if st.session_state.joueurs:
     joueur_selection = st.selectbox("Sélectionnez le joueur", list(st.session_state.joueurs.keys()), key="joueur_calc")
     heure_naissance_joueur = st.session_state.joueurs[joueur_selection]
 
-    nombre_astral = st.number_input("Nombre Astral du personnage (NA, 1-12)", min_value=1, max_value=12, value=3)
+    nombre_astral = st.selectbox(
+    "Nombre Astral du jour (1-12)",
+    options=list(range(1, 13)),
+    index=2  # valeur par défaut = 3
+)
 
     if st.button("Calculer le modificateur astral pour ce joueur"):
         bonus = calc_bonus_astral(heure_astrale, heure_naissance_joueur, nombre_astral)
