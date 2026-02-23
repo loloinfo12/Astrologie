@@ -1,4 +1,4 @@
-import streamlit as st
+iimport streamlit as st
 
 # Heures astrales officielles Rêve de Dragon
 heures_ast = {
@@ -54,14 +54,18 @@ def texte_astral(bonus, nom_heure):
 # Interface Streamlit
 st.subheader("🔮 Calcul du Bonus/Malus Astral")
 
-# Création d'une liste avec numéro et nom pour selectbox
+# Création de listes pour selectbox avec numéro + nom
 heures_options = [f"{num} - {nom}" for num, nom in heures_ast.items()]
-heure_selection = st.selectbox("Sélectionnez l'heure astrale actuelle", heures_options)
 
-# Extraire le numéro de l'heure sélectionnée
+# Heure astrale actuelle
+heure_selection = st.selectbox("Sélectionnez l'heure astrale actuelle", heures_options)
 heure_astrale = int(heure_selection.split(" - ")[0])
 
-heure_naissance = st.number_input("Heure de naissance du personnage (HN, 1-12)", min_value=1, max_value=12, value=4)
+# Heure de naissance du personnage
+hn_selection = st.selectbox("Sélectionnez l'heure de naissance du personnage (HN)", heures_options, index=3)
+heure_naissance = int(hn_selection.split(" - ")[0])
+
+# Nombre astral
 nombre_astral = st.number_input("Nombre Astral du personnage (NA, 1-12)", min_value=1, max_value=12, value=3)
 
 if st.button("Calculer le modificateur astral"):
