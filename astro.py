@@ -1,4 +1,4 @@
-iimport streamlit as st
+import streamlit as st
 
 # Heures astrales officielles Rêve de Dragon
 heures_ast = {
