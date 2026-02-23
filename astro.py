@@ -1,6 +1,18 @@
 import streamlit as st
+from PIL import Image
 
+# ==============================
+# Affichage de l'image de la roue astrologique
+# ==============================
+try:
+    image = Image.open("rdd_roueAstrologique-300x283.jpg")  # ou "images/rdd_roueAstrologique-300x283.jpg"
+    st.image(image, caption="Roue astrologique de Rêve de Dragon", use_column_width=True)
+except FileNotFoundError:
+    st.warning("⚠️ Image de la roue astrologique introuvable ! Vérifiez le chemin du fichier.")
+
+# ==============================
 # Heures astrales officielles Rêve de Dragon
+# ==============================
 heures_ast = {
     1: "Le Vaisseau",
     2: "La Sirène",
@@ -16,7 +28,9 @@ heures_ast = {
     12: "Le Château Dormant"
 }
 
+# ==============================
 # Fonction calcul bonus/malus
+# ==============================
 def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     diff = (heure_astrale + nombre_astral - heure_naissance) % 12
     if diff == 0:
@@ -34,7 +48,9 @@ def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     elif diff == 6:
         return -4
 
+# ==============================
 # Texte narratif
+# ==============================
 def texte_astral(bonus, nom_heure):
     if bonus == 4:
         return f"✨ Heure de Grand Destin ({nom_heure}) : la chance et la puissance sont maximales !"
@@ -51,7 +67,9 @@ def texte_astral(bonus, nom_heure):
     elif bonus == -4:
         return f"💀 Chaos astral ({nom_heure}) : les astres sont contre vous !"
 
+# ==============================
 # Interface Streamlit
+# ==============================
 st.subheader("🔮 Calcul du Bonus/Malus Astral")
 
 # Création de listes pour selectbox avec numéro + nom
@@ -68,6 +86,7 @@ heure_naissance = int(hn_selection.split(" - ")[0])
 # Nombre astral
 nombre_astral = st.number_input("Nombre Astral du personnage (NA, 1-12)", min_value=1, max_value=12, value=3)
 
+# Bouton calcul
 if st.button("Calculer le modificateur astral"):
     bonus = calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral)
     nom_heure = heures_ast[heure_astrale]
