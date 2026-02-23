@@ -25,35 +25,34 @@ heures_ast = {
 def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     diff = (heure_astrale + nombre_astral - heure_naissance) % 12
     if diff == 0:
-        return 4
+        return 4  # Très favorable
     elif diff in (1, 11):
-        return 3
+        return 2  # Favorable
     elif diff in (2, 10):
-        return 2
+        return 0  # Neutre
     elif diff in (3, 9):
-        return 0
+        return 0  # Neutre
     elif diff in (4, 8):
-        return -2
+        return -2  # Défavorable
     elif diff in (5, 7):
-        return -3
+        return 0  # Neutre
     elif diff == 6:
-        return -4
+        return -4  # Très défavorable
 
+# ==============================
+# Texte narratif
+# ==============================
 def texte_astral(bonus, nom_heure):
     if bonus == 4:
-        return f"✨ Heure de Grand Destin ({nom_heure}) : la chance et la puissance sont maximales !"
-    elif bonus == 3:
-        return f"🌟 Très favorable ({nom_heure}) : tout semble tourner en votre faveur."
+        return f"✨ Très favorable ({nom_heure}) : la chance et la puissance sont maximales !"
     elif bonus == 2:
         return f"👍 Favorable ({nom_heure}) : les astres vous sourient légèrement."
     elif bonus == 0:
         return f"⚪ Neutre ({nom_heure}) : aucun avantage ni désavantage particulier."
     elif bonus == -2:
-        return f"⚠️ Un peu défavorable ({nom_heure}) : prudence conseillée."
-    elif bonus == -3:
-        return f"❌ Défavorable ({nom_heure}) : les difficultés sont probables."
+        return f"❌ Défavorable ({nom_heure}) : prudence conseillée."
     elif bonus == -4:
-        return f"💀 Chaos astral ({nom_heure}) : les astres sont contre vous !"
+        return f"💀 Très défavorable ({nom_heure}) : les astres sont contre vous !"
 
 # ==============================
 # Stockage des joueurs et de leur HN
@@ -63,7 +62,6 @@ if "joueurs" not in st.session_state:
 
 st.subheader("🧙‍♂️ Gestion des joueurs")
 
-# Ajouter un joueur
 nom_joueur = st.text_input("Nom du joueur à enregistrer")
 hn_selection = st.selectbox("Heure de naissance du joueur", [f"{num} - {nom}" for num, nom in heures_ast.items()])
 heure_naissance = int(hn_selection.split(" - ")[0])
@@ -82,7 +80,6 @@ st.subheader("🔮 Calcul du Bonus/Malus Astral")
 
 # Affichage de la roue astrologique
 try:
-    from PIL import Image
     image = Image.open("rdd_roueAstrologique-300x283.jpg")
     st.image(image, caption="Roue astrologique de Rêve de Dragon", use_column_width=True)
 except FileNotFoundError:
