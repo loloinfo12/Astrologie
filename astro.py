@@ -1,8 +1,6 @@
 import streamlit as st
 
-# ==============================
 # Heures astrales officielles Rêve de Dragon
-# ==============================
 heures_ast = {
     1: "Le Vaisseau",
     2: "La Sirène",
@@ -18,29 +16,25 @@ heures_ast = {
     12: "Le Château Dormant"
 }
 
-# ==============================
-# Fonction de calcul bonus/malus astral
-# ==============================
+# Fonction calcul bonus/malus
 def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     diff = (heure_astrale + nombre_astral - heure_naissance) % 12
     if diff == 0:
-        return 4  # Heure de Grand Destin
+        return 4
     elif diff in (1, 11):
-        return 3  # Très favorable
+        return 3
     elif diff in (2, 10):
-        return 2  # Favorable
+        return 2
     elif diff in (3, 9):
-        return 0  # Neutre
+        return 0
     elif diff in (4, 8):
-        return -2  # Un peu défavorable
+        return -2
     elif diff in (5, 7):
-        return -3  # Défavorable
+        return -3
     elif diff == 6:
-        return -4  # Chaos astral
+        return -4
 
-# ==============================
-# Texte narratif en fonction du modificateur
-# ==============================
+# Texte narratif
 def texte_astral(bonus, nom_heure):
     if bonus == 4:
         return f"✨ Heure de Grand Destin ({nom_heure}) : la chance et la puissance sont maximales !"
@@ -56,15 +50,17 @@ def texte_astral(bonus, nom_heure):
         return f"❌ Défavorable ({nom_heure}) : les difficultés sont probables."
     elif bonus == -4:
         return f"💀 Chaos astral ({nom_heure}) : les astres sont contre vous !"
-    else:
-        return f"{nom_heure} : modificateur inconnu."
 
-# ==============================
 # Interface Streamlit
-# ==============================
 st.subheader("🔮 Calcul du Bonus/Malus Astral")
 
-heure_astrale = st.number_input("Heure Astrale actuelle (1-12)", min_value=1, max_value=12, value=1)
+# Création d'une liste avec numéro et nom pour selectbox
+heures_options = [f"{num} - {nom}" for num, nom in heures_ast.items()]
+heure_selection = st.selectbox("Sélectionnez l'heure astrale actuelle", heures_options)
+
+# Extraire le numéro de l'heure sélectionnée
+heure_astrale = int(heure_selection.split(" - ")[0])
+
 heure_naissance = st.number_input("Heure de naissance du personnage (HN, 1-12)", min_value=1, max_value=12, value=4)
 nombre_astral = st.number_input("Nombre Astral du personnage (NA, 1-12)", min_value=1, max_value=12, value=3)
 
