@@ -25,17 +25,13 @@ heures_ast = {
 def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     diff = (heure_astrale + nombre_astral - heure_naissance) % 12
     if diff == 0:
-        return 4  # Très favorable
+        return 4   # Très favorable
     elif diff in (1, 11):
-        return 2  # Favorable
-    elif diff in (2, 10):
-        return 0  # Neutre
-    elif diff in (3, 9):
-        return 0  # Neutre
+        return 2   # Favorable
+    elif diff in (2, 3, 5, 7, 9, 10):
+        return 0   # Neutre
     elif diff in (4, 8):
         return -2  # Défavorable
-    elif diff in (5, 7):
-        return 0  # Neutre
     elif diff == 6:
         return -4  # Très défavorable
 
@@ -60,8 +56,14 @@ def texte_astral(bonus, nom_heure):
 if "joueurs" not in st.session_state:
     st.session_state.joueurs = {}  # clé = nom du joueur, valeur = HN (1-12)
 
+st.title("🔮 Rêve de Dragon - Calcul Astral")
+
+# ==============================
+# Gestion des joueurs
+# ==============================
 st.subheader("🧙‍♂️ Gestion des joueurs")
 
+# Ajouter un joueur
 nom_joueur = st.text_input("Nom du joueur à enregistrer")
 hn_selection = st.selectbox("Heure de naissance du joueur", [f"{num} - {nom}" for num, nom in heures_ast.items()])
 heure_naissance = int(hn_selection.split(" - ")[0])
@@ -72,6 +74,14 @@ if st.button("Enregistrer le joueur"):
         st.success(f"Joueur {nom_joueur} enregistré avec HN = {heure_naissance} ({heures_ast[heure_naissance]})")
     else:
         st.warning("Veuillez entrer un nom de joueur valide.")
+
+# Supprimer un joueur
+if st.session_state.joueurs:
+    st.subheader("🗑️ Supprimer un joueur")
+    joueur_suppr = st.selectbox("Sélectionnez le joueur à supprimer", list(st.session_state.joueurs.keys()), key="suppr")
+    if st.button("Supprimer ce joueur"):
+        del st.session_state.joueurs[joueur_suppr]
+        st.success(f"Joueur {joueur_suppr} supprimé.")
 
 # ==============================
 # Calcul du bonus/malus astral
@@ -92,7 +102,7 @@ heure_astrale = int(heure_selection_astrale.split(" - ")[0])
 
 # Choisir le joueur pour utiliser son HN
 if st.session_state.joueurs:
-    joueur_selection = st.selectbox("Sélectionnez le joueur", list(st.session_state.joueurs.keys()))
+    joueur_selection = st.selectbox("Sélectionnez le joueur", list(st.session_state.joueurs.keys()), key="joueur_calc")
     heure_naissance_joueur = st.session_state.joueurs[joueur_selection]
 
     nombre_astral = st.number_input("Nombre Astral du personnage (NA, 1-12)", min_value=1, max_value=12, value=3)
