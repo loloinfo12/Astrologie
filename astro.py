@@ -1,16 +1,58 @@
 import streamlit as st
 from PIL import Image
-import json
+import sqlite3
 import os
 
 # ==============================
-# Fichier de sauvegarde des joueurs
+# Configuration base SQLite
 # ==============================
-FICHIER_JOUEURS = "joueurs.json"
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "joueurs.db")
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS joueurs (
+            nom TEXT PRIMARY KEY,
+            heure_naissance INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def ajouter_joueur(nom, heure_naissance):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO joueurs (nom, heure_naissance) VALUES (?, ?)",
+        (nom, heure_naissance)
+    )
+    conn.commit()
+    conn.close()
+
+def supprimer_joueur(nom):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM joueurs WHERE nom = ?", (nom,))
+    conn.commit()
+    conn.close()
+
+def charger_joueurs():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT nom, heure_naissance FROM joueurs")
+    data = cursor.fetchall()
+    conn.close()
+    return {nom: hn for nom, hn in data}
+
+init_db()
 
 # ==============================
-# Heures astrales Rêve de Dragon
+# Heures astrales
 # ==============================
+
 heures_ast = {
     1: "Le Vaisseau",
     2: "La Sirène",
@@ -27,109 +69,145 @@ heures_ast = {
 }
 
 # ==============================
-# Fonction calcul bonus/malus
+# Calcul bonus/malus
 # ==============================
+
 def calc_bonus_astral(heure_astrale, heure_naissance, nombre_astral):
     diff = (heure_astrale + nombre_astral - heure_naissance) % 12
     if diff == 0:
-        return 4   # Très favorable
+        return 4
     elif diff in (1, 11):
-        return 2   # Favorable
+        return 2
     elif diff in (2, 3, 5, 7, 9, 10):
-        return 0   # Neutre
+        return 0
     elif diff in (4, 8):
-        return -2  # Défavorable
+        return -2
     elif diff == 6:
-        return -4  # Très défavorable
+        return -4
+    return 0
 
-# ==============================
-# Texte narratif
-# ==============================
 def texte_astral(bonus, nom_heure):
     if bonus == 4:
-        return f"✨ Très favorable ({nom_heure}) : la chance et la puissance sont maximales !"
+        return f"✨ Très favorable ({nom_heure}) : la chance est maximale !"
     elif bonus == 2:
-        return f"👍 Favorable ({nom_heure}) : les astres vous sourient légèrement."
+        return f"👍 Favorable ({nom_heure}) : les astres vous sourient."
     elif bonus == 0:
-        return f"⚪ Neutre ({nom_heure}) : aucun avantage ni désavantage particulier."
+        return f"⚪ Neutre ({nom_heure}) : aucun effet particulier."
     elif bonus == -2:
-        return f"❌ Défavorable ({nom_heure}) : prudence conseillée."
+        return f"❌ Défavorable ({nom_heure}) : prudence."
     elif bonus == -4:
         return f"💀 Très défavorable ({nom_heure}) : les astres sont contre vous !"
 
 # ==============================
-# Gestion des joueurs persistante
+# Chargement session
 # ==============================
-if os.path.exists(FICHIER_JOUEURS):
-    with open(FICHIER_JOUEURS, "r") as f:
-        st.session_state.joueurs = json.load(f)
-else:
-    st.session_state.joueurs = {}
 
-def sauvegarder_joueurs():
-    with open(FICHIER_JOUEURS, "w") as f:
-        json.dump(st.session_state.joueurs, f)
+if "joueurs" not in st.session_state:
+    st.session_state.joueurs = charger_joueurs()
 
 # ==============================
-# Interface Streamlit
+# Interface
 # ==============================
+
 st.title("🔮 Rêve de Dragon - Calcul Astral")
 
-# Ajouter un joueur
+# ==============================
+# Ajouter joueur
+# ==============================
+
 st.subheader("🧙‍♂️ Ajouter un joueur")
-nom_joueur = st.text_input("Nom du joueur à enregistrer")
-hn_selection = st.selectbox("Heure de naissance du joueur", [f"{num} - {nom}" for num, nom in heures_ast.items()])
+
+nom_joueur = st.text_input("Nom du joueur")
+
+hn_selection = st.selectbox(
+    "Heure de naissance",
+    [f"{num} - {nom}" for num, nom in heures_ast.items()]
+)
+
 heure_naissance = int(hn_selection.split(" - ")[0])
 
 if st.button("Enregistrer le joueur"):
     if nom_joueur:
-        st.session_state.joueurs[nom_joueur] = heure_naissance
-        sauvegarder_joueurs()
-        st.success(f"Joueur {nom_joueur} enregistré avec HN = {heure_naissance} ({heures_ast[heure_naissance]})")
+        ajouter_joueur(nom_joueur, heure_naissance)
+        st.session_state.joueurs = charger_joueurs()
+        st.success(f"{nom_joueur} enregistré.")
+        st.rerun()
     else:
-        st.warning("Veuillez entrer un nom de joueur valide.")
+        st.warning("Veuillez entrer un nom valide.")
 
-# Supprimer un joueur
+# ==============================
+# Supprimer joueur
+# ==============================
+
 if st.session_state.joueurs:
     st.subheader("🗑️ Supprimer un joueur")
-    joueur_suppr = st.selectbox("Sélectionnez le joueur à supprimer", list(st.session_state.joueurs.keys()), key="suppr")
+
+    joueur_suppr = st.selectbox(
+        "Choisir un joueur",
+        list(st.session_state.joueurs.keys()),
+        key="suppr"
+    )
+
     if st.button("Supprimer ce joueur"):
-        del st.session_state.joueurs[joueur_suppr]
-        sauvegarder_joueurs()
-        st.success(f"Joueur {joueur_suppr} supprimé.")
+        supprimer_joueur(joueur_suppr)
+        st.session_state.joueurs = charger_joueurs()
+        st.success(f"{joueur_suppr} supprimé.")
+        st.rerun()
 
 # ==============================
-# Calcul du bonus/malus astral
+# Calcul astral
 # ==============================
+
 st.subheader("🔮 Calcul du Bonus/Malus Astral")
 
-# Affichage de la roue astrologique
 try:
     image = Image.open("rdd_roueAstrologique-300x283.jpg")
-    st.image(image, caption="Roue astrologique de Rêve de Dragon", use_column_width=True)
-except FileNotFoundError:
-    st.warning("⚠️ Image de la roue astrologique introuvable ! Vérifiez le chemin du fichier.")
+    st.image(image, caption="Roue astrologique", use_column_width=True)
+except:
+    st.info("Image roue astrologique non trouvée.")
 
-# Heure astrale actuelle
-heures_options = [f"{num} - {nom}" for num, nom in heures_ast.items()]
-heure_selection_astrale = st.selectbox("Sélectionnez l'heure astrale actuelle", heures_options)
+heure_selection_astrale = st.selectbox(
+    "Heure astrale actuelle",
+    [f"{num} - {nom}" for num, nom in heures_ast.items()]
+)
+
 heure_astrale = int(heure_selection_astrale.split(" - ")[0])
 
-# Choisir le joueur pour utiliser son HN
 if st.session_state.joueurs:
-    joueur_selection = st.selectbox("Sélectionnez le joueur", list(st.session_state.joueurs.keys()), key="joueur_calc")
+
+    joueur_selection = st.selectbox(
+        "Sélectionnez le joueur",
+        list(st.session_state.joueurs.keys()),
+        key="joueur_calc"
+    )
+
     heure_naissance_joueur = st.session_state.joueurs[joueur_selection]
 
     nombre_astral = st.selectbox(
-    "Nombre Astral du jour (1-12)",
-    options=list(range(1, 13)),
-    index=2  # valeur par défaut = 3
-)
+        "Nombre Astral du jour",
+        options=list(range(1, 13)),
+        index=2
+    )
 
-    if st.button("Calculer le modificateur astral pour ce joueur"):
-        bonus = calc_bonus_astral(heure_astrale, heure_naissance_joueur, nombre_astral)
+    if st.button("Calculer le modificateur astral"):
+
+        bonus = calc_bonus_astral(
+            heure_astrale,
+            heure_naissance_joueur,
+            nombre_astral
+        )
+
         nom_heure = heures_ast[heure_astrale]
-        st.success(f"Modificateur astral pour {joueur_selection} : {bonus:+d}")
+
+        st.markdown(f"""
+        ### ✨ Résultat Astral
+
+        **Joueur :** {joueur_selection}  
+        **Heure astrale :** {nom_heure}  
+        **Modificateur :** `{bonus:+d}`
+        """)
+
         st.info(texte_astral(bonus, nom_heure))
+
 else:
-    st.info("⚠️ Aucun joueur enregistré. Veuillez ajouter un joueur pour calculer le bonus astral.")
+    st.warning("Ajoutez au moins un joueur pour effectuer un calcul.")
